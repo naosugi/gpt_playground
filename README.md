@@ -3,6 +3,16 @@ https://digital-gov.note.jp/n/nc24c2f70feda のデモアプリを改修したも
 
 ChatGPTのAPIをcallするいわゆるplayground環境
 
+## 参照用Github Pagesのリンク
+
+- [プレーン](https://naosugi.github.io/gpt_playground/main.html)
+- [日本語の校正](https://naosugi.github.io/gpt_playground/example/%E6%97%A5%E6%9C%AC%E8%AA%9E%E3%81%AE%E6%A0%A1%E6%AD%A3.html)
+- [補助金・助成金・支援金の情報ラベル付け](https://naosugi.github.io/gpt_playground/example/補助金・助成金・支援金の情報ラベル付け.html)
+- [確定申告が必要か判定](https://naosugi.github.io/gpt_playground/example/%E7%A2%BA%E5%AE%9A%E7%94%B3%E5%91%8A%E3%81%8C%E5%BF%85%E8%A6%81%E3%81%8B%E5%88%A4%E5%AE%9A.html)
+- [キャラなりきり](https://naosugi.github.io/gpt_playground/example/LLMintoLUM.html)
+
+
+
 ## 改修点
 1. OpenAI のAPIに対応
 2. gpt3.5のコストを最新化
