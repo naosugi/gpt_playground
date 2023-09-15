@@ -1,0 +1,322 @@
+<html lang="ja"><head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPT playground</title>
+
+  <script> 
+    async function sendData() { 
+      let elements = document.getElementsByName('model');
+      let len = elements.length;
+            /* ラヂオボタンでモデル種類を選ぶようになるなら有効化
+      let modelName = '';
+      for (let i = 0; i < len; i++){
+        if (elements.item(i).checked){
+          modelName = elements.item(i).value;
+        }
+      }
+            */
+      document.getElementById("send").setAttribute("disabled", true);
+      let modelVer = "gpt-3.5-turbo"; //OpenAIのGPT3.5がデフォルト値
+      const url = "https://api.openai.com/v1/chat/completions"
+      const input = document.getElementById("input").value;
+      const system = document.getElementById("system").value; 
+      const apiKey = document.getElementById("api_key").value; // ここにAPIキーを入力してください 
+      var message = [
+        {"role": "system","content":system}
+      ]
+      const prompts = document.getElementsByClassName("prompt");
+
+      var i_last = 1;
+      for (let i=0; i< prompts.length-2; i+=2){
+        if (prompts.item(i).value.length>0){
+          message.push({"role": "user","content":prompts.item(i).value});
+          message.push({"role": "assistant","content":prompts.item(i+1).value});
+          i_last = i_last+1
+        }
+      }
+
+      message.push({"role": "user","content":input})
+      // OpenAI とのAPI通信
+            const requestOptions = { 
+        method: "POST", 
+        mode: "cors",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": "Bearer "+apiKey,
+          "Access-Control-Allow-Origin": "*",
+          cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+          credentials: 'omit', // include, *same-origin, omit,
+        }, 
+
+        body: JSON.stringify({
+                                    "model": modelVer,
+                  "messages": message,
+                  "temperature": 0
+                    })
+      };
+
+      try {
+        const response = await fetch(url, requestOptions); 
+        if (!response.ok) { 
+          throw new Error(`HTTP error! status: ${response.status}`); 
+          }
+        const data = await response.json();
+        console.log(data);
+
+        document.getElementById("input"+i_last).value = input;
+        document.getElementById("output"+i_last).value = data["choices"][0]["message"]["content"];
+
+        const cost = (data["usage"]["prompt_tokens"] * 0.0015 * 1/1000 + data["usage"]["completion_tokens"] * 0.002 * 1/1000);
+
+        document.getElementById("usage").innerText = "このリクエストの利用料金: " + cost + " USD"; 
+      }
+
+      catch (error) {
+        alert(`Fetchエラー: ${error.message}`);
+      }
+      finally {
+        document.getElementById("send").removeAttribute("disabled");
+      }
+    } 
+    async function saveHTML() {
+        // DOMの書き換えコードを実行
+        const input = document.getElementById("input").value;
+        const system = document.getElementById("system").value;
+        document.getElementById("input").outerHTML = '<textarea id="input" name="input" rows="10" cols="140">' + input + '</textarea>';
+        document.getElementById("system").outerHTML = '<textarea id="system" name="sytem" rows="10" cols="140">' + system + '</textarea>';
+        
+        const prompts = document.getElementsByClassName("prompt");
+        const max_length = prompts.length
+        for (let i=1; i<= max_length; i++){
+            if (document.getElementById("input"+i)){
+                const o1 = document.getElementById("input"+i).value;
+                const o2 = document.getElementById("output"+i).value;
+                document.getElementById("input"+i).outerHTML = '<textarea id="input' + i + '" class="prompt" name="user" rows="10" cols="140">' + o1 + '</textarea>';
+                document.getElementById("output"+i).outerHTML = '<textarea id="output' + i + '" class="prompt" name="user" rows="10" cols="140">' + o2 + '</textarea>';
+            }
+        }
+        
+        // 書き換えたDOMを含むHTML全体を取得
+        var modifiedHTML = document.documentElement.outerHTML;
+
+        // HTMLを保存するためのBlobを作成
+        var blob = new Blob([modifiedHTML], { type: 'text/html' });
+
+        // ダウンロード用のURLを作成し、リンクを生成
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'edited_gpt.html';
+        link.click();
+
+        // 作成したURLを解放
+        URL.revokeObjectURL(url);
+
+    }
+    </script> 
+
+</head> 
+
+<body> 
+  <details>
+    <summary>使い方</summary>
+    <h3>使用上の注意</h3>
+    <li>各環境にあわせた使用上の注意点を書く</li>
+    <h3>操作方法</h3>
+    <li>GPTへの入力フォームにGPTに聞きたいことを書き、「gptに聞く」ボタンを押してください。すると画面下のassistant responseの箇所にGPTからの応答が入ります</li>
+    <li>過去に入力した文字列はuser promptという箇所に残ります。これを消さずに、再度GPTへの入力フォームから送信すると前回の会話をふまえた反応が返ります</li>
+    <li>system promptを工夫することでGPTへの応答をある程度制御できます。詳細は<a href="https://www.digital.go.jp/assets/contents/node/information/field_ref_resources/5896883b-cc5a-4c5a-b610-eb32b0f4c175/82ccd074/20230725_resources_ai_outline.pdf">講義資料</a>や<a href="https://platform.openai.com/docs/api-reference/chat/create">GPT APIのドキュメント</a>などをご参照ください</li>
+  </details>
+
+  <p>
+      <label for="api_key">api key:</label>
+      <input type="password" id="api_key" name="api_key">
+    <label><input type="radio" name="model" value="gpt-3.5-turbo" checked="">gpt-3.5-turbo</label>
+  </p>
+
+  <p id="usage">このリクエストの利用料金: 0.003403 USD</p>
+
+  <div>
+    <label for="input">GPTへの入力フォーム</label><br>
+    <textarea id="input" name="input" rows="10" cols="140">収入が２ヶ所以上ある</textarea>
+        <button id="send" onclick="sendData()">gptに聞く</button>
+        <button id="send" onclick="saveHTML()">HTMLに保存</button>
+  </div>
+
+  <div>
+    <p class="system_p">
+      <label for="system">system prompt</label><br>
+      <textarea id="system" name="sytem" rows="10" cols="140">確定申告が必要かを判定
+
+### rule ###
+次の1から4のいずれかに該当する方（確定申告をすれば税金が還付される方を除きます。）は、所得税等の確定申告が必要です。
+
+区分	概要
+①給与所得がある方
+
+大部分の方は、年末調整により所得税等が精算されるため、申告は不要です。
+※確定申告をする場合には、年末調整を受けた給与所得も含めて申告が必要です。
+
+次の計算において残額があり、さらに（1）から（6）のいずれかに該当する
+
+（計算）
+
+1　各種の所得の合計額（譲渡所得や山林所得を含む。）から、所得控除を差し引いて、課税される所得金額を求めます。
+2　課税される所得金額に所得税の税率を乗じて、所得税額を求めます。
+3　所得税額から、配当控除額と年末調整の際に控除を受けた（特定増改築等）住宅借入金等特別控除額を差し引きます。
+(1)　給与の収入金額が2,000万円を超える
+(2)　給与を1か所から受けていて、かつ、その給与の全部が源泉徴収の対象となる場合において、各種の所得金額（給与所得、退職所得を除く。）の合計額が20万円を超える
+（例） 給与を1か所から受けていて、公的年金等による収入金額が80万円（65歳以上の方（昭和33年1月1日以前に生まれた方）は、130万円）を超える場合
+(3)　給与を2か所以上から受けていて、かつ、その給与の全部が源泉徴収の対象となる場合において、年末調整をされなかった給与の収入金額と、各種の所得金額（給与所得、退職所得を除く。）との合計額が20万円を超える
+※　給与所得の収入金額の合計額から、所得控除の合計額（雑損控除、医療費控除、寄附金控除及び基礎控除を除く。）を差し引いた残りの金額が150万円以下で、さらに各種の所得金額（給与所得、退職所得を除く。）の合計額が20万円以下の方は、申告は不要です。
+(4)　同族会社の役員やその親族などで、その同族会社からの給与のほかに、貸付金の利子、店舗・工場などの賃貸料、機械・器具の使用料などの支払を受けた
+(5)　給与について、災害減免法により所得税等の源泉徴収税額の徴収猶予や還付を受けた
+(6)　在日の外国公館に勤務する方や家事使用人の方などで、給与の支払を受ける際に所得税等を源泉徴収されないこととなっている
+②公的年金等の雑所得のみの方
+
+公的年金等の雑所得の金額から所得控除を差し引くと、残額がある
+
+※　確定申告不要制度は【年金所得者に係る確定申告不要制度について】を参照してください。
+
+③退職所得がある方
+
+外国企業から受け取った退職金など、源泉徴収されないものがある
+※　退職金などの支払者に『退職所得の受給に関する申告書』を提出した場合、一般的に、退職所得に係る所得税等は源泉徴収により課税が済むことになりますので、申告書の提出は不要です。ただし、退職所得のある方が確定申告書を提出する場合は、退職所得を含めて申告する必要があります。
+ なお、退職所得以外の所得がある方は、①又は④を参照してください。
+
+※　退職所得の記入方法等は、こちらを参照してください。
+
+④①～③以外の方
+
+次の計算において残額がある
+
+（計算）
+
+1　各種の所得の合計額（譲渡所得や山林所得を含む。）から、所得控除を差し引いて、課税される所得金額を求めます。
+2　課税される所得金額に所得税の税率を乗じて、所得税額を求めます。
+3　所得税額から、配当控除額を差し引きます。
+※　上場株式等に係る譲渡損失と配当所得等との損益通算及び繰越控除の特例の適用を受けようとする方などは、①から④に当てはまらない方であっても確定申告が必要です。
+
+【年金所得者に係る確定申告不要制度について】
+以下のいずれにも該当する場合には、計算の結果、納税額がある場合でも所得税等の確定申告は必要ありません。
+
+①公的年金等（その全部(※1)が源泉徴収の対象となる場合(※2)に限ります。）の収入金額が400万円以下
+※1　所得税法第203条の7（源泉徴収を要しない公的年金等）の規定の適用を受けるものを除きます。
+
+※2　一定の外国年金が国外で支払われる場合などには、源泉徴収の対象となりません。
+
+②公的年金等に係る雑所得以外の所得金額が20万円以下
+※　上記の場合でも、「確定申告をすれば税金が還付される方」に該当する場合には、還付を受けるための申告（還付申告）を行うことにより税金が還付されます。
+
+※　住民税については、「市区町村からのお知らせ」を参照してください。</textarea>
+    </p>
+
+    <p class="user_p">
+      <label for="input1">user prompt</label><br>
+      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">収入が２ヶ所以上ある</textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output1">assistant response</label> <br>
+      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">①給与の収入金額が2,000万円を超える
+(3)　給与を2か所以上から受けていて、かつ、その給与の全部が源泉徴収の対象となる場合において、年末調整をされなかった給与の収入金額と、各種の所得金額（給与所得、退職所得を除く。）との合計額が20万円を超える
+
+上記のいずれかに該当する場合、確定申告が必要です。</textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input2">user prompt</label><br>
+      <textarea id="input2" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output2">assistant response</label> <br>
+      <textarea id="output2" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input3">user prompt</label><br>
+      <textarea id="input3" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output3">assistant response</label> <br>
+      <textarea id="output3" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input4">user prompt</label><br>
+      <textarea id="input4" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output4">assistant response</label> <br>
+      <textarea id="output4" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input5">user prompt</label><br>
+      <textarea id="input5" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output5">assistant response</label> <br>
+      <textarea id="output5" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input6">user prompt</label><br>
+      <textarea id="input6" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output6">assistant response</label> <br>
+      <textarea id="output6" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input7">user prompt</label><br>
+      <textarea id="input7" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output7">assistant response</label> <br>
+      <textarea id="output7" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input8">user prompt</label><br>
+      <textarea id="input8" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output8">assistant response</label> <br>
+      <textarea id="output8" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input9">user prompt</label><br>
+      <textarea id="input9" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output9">assistant response</label> <br>
+      <textarea id="output9" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input10">user prompt</label><br>
+      <textarea id="input10" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output10">assistant response</label> <br>
+      <textarea id="output10" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+  </div>
+
+ 
+
+ 
+
+ </body></html>

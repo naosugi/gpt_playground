@@ -1,0 +1,296 @@
+<html lang="ja"><head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPT playground</title>
+
+  <script> 
+    async function sendData() { 
+      let elements = document.getElementsByName('model');
+      let len = elements.length;
+            /* ラヂオボタンでモデル種類を選ぶようになるなら有効化
+      let modelName = '';
+      for (let i = 0; i < len; i++){
+        if (elements.item(i).checked){
+          modelName = elements.item(i).value;
+        }
+      }
+            */
+      document.getElementById("send").setAttribute("disabled", true);
+      let modelVer = "gpt-3.5-turbo"; //OpenAIのGPT3.5がデフォルト値
+      const url = "https://api.openai.com/v1/chat/completions"
+      const input = document.getElementById("input").value;
+      const system = document.getElementById("system").value; 
+      const apiKey = document.getElementById("api_key").value; // ここにAPIキーを入力してください 
+      var message = [
+        {"role": "system","content":system}
+      ]
+      const prompts = document.getElementsByClassName("prompt");
+
+      var i_last = 1;
+      for (let i=0; i< prompts.length-2; i+=2){
+        if (prompts.item(i).value.length>0){
+          message.push({"role": "user","content":prompts.item(i).value});
+          message.push({"role": "assistant","content":prompts.item(i+1).value});
+          i_last = i_last+1
+        }
+      }
+
+      message.push({"role": "user","content":input})
+      // OpenAI とのAPI通信
+            const requestOptions = { 
+        method: "POST", 
+        mode: "cors",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": "Bearer "+apiKey,
+          "Access-Control-Allow-Origin": "*",
+          cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+          credentials: 'omit', // include, *same-origin, omit,
+        }, 
+
+        body: JSON.stringify({
+                                    "model": modelVer,
+                  "messages": message,
+                  "temperature": 0
+                    })
+      };
+
+      try {
+        const response = await fetch(url, requestOptions); 
+        if (!response.ok) { 
+          throw new Error(`HTTP error! status: ${response.status}`); 
+          }
+        const data = await response.json();
+        console.log(data);
+
+        document.getElementById("input"+i_last).value = input;
+        document.getElementById("output"+i_last).value = data["choices"][0]["message"]["content"];
+
+        const cost = (data["usage"]["prompt_tokens"] * 0.0015 * 1/1000 + data["usage"]["completion_tokens"] * 0.002 * 1/1000);
+
+        document.getElementById("usage").innerText = "このリクエストの利用料金: " + cost + " USD"; 
+      }
+
+      catch (error) {
+        alert(`Fetchエラー: ${error.message}`);
+      }
+      finally {
+        document.getElementById("send").removeAttribute("disabled");
+      }
+    } 
+    async function saveHTML() {
+        // DOMの書き換えコードを実行
+        const input = document.getElementById("input").value;
+        const system = document.getElementById("system").value;
+        document.getElementById("input").outerHTML = '<textarea id="input" name="input" rows="10" cols="140">' + input + '</textarea>';
+        document.getElementById("system").outerHTML = '<textarea id="system" name="sytem" rows="10" cols="140">' + system + '</textarea>';
+        
+        const prompts = document.getElementsByClassName("prompt");
+        const max_length = prompts.length
+        for (let i=1; i<= max_length; i++){
+            if (document.getElementById("input"+i)){
+                const o1 = document.getElementById("input"+i).value;
+                const o2 = document.getElementById("output"+i).value;
+                document.getElementById("input"+i).outerHTML = '<textarea id="input' + i + '" class="prompt" name="user" rows="10" cols="140">' + o1 + '</textarea>';
+                document.getElementById("output"+i).outerHTML = '<textarea id="output' + i + '" class="prompt" name="user" rows="10" cols="140">' + o2 + '</textarea>';
+            }
+        }
+        
+        // 書き換えたDOMを含むHTML全体を取得
+        var modifiedHTML = document.documentElement.outerHTML;
+
+        // HTMLを保存するためのBlobを作成
+        var blob = new Blob([modifiedHTML], { type: 'text/html' });
+
+        // ダウンロード用のURLを作成し、リンクを生成
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'edited_gpt.html';
+        link.click();
+
+        // 作成したURLを解放
+        URL.revokeObjectURL(url);
+
+    }
+    </script> 
+
+</head> 
+
+<body> 
+  <details>
+    <summary>使い方</summary>
+    <h3>使用上の注意</h3>
+    <li>各環境にあわせた使用上の注意点を書く</li>
+    <h3>操作方法</h3>
+    <li>GPTへの入力フォームにGPTに聞きたいことを書き、「gptに聞く」ボタンを押してください。すると画面下のassistant responseの箇所にGPTからの応答が入ります</li>
+    <li>過去に入力した文字列はuser promptという箇所に残ります。これを消さずに、再度GPTへの入力フォームから送信すると前回の会話をふまえた反応が返ります</li>
+    <li>system promptを工夫することでGPTへの応答をある程度制御できます。詳細は<a href="https://www.digital.go.jp/assets/contents/node/information/field_ref_resources/5896883b-cc5a-4c5a-b610-eb32b0f4c175/82ccd074/20230725_resources_ai_outline.pdf">講義資料</a>や<a href="https://platform.openai.com/docs/api-reference/chat/create">GPT APIのドキュメント</a>などをご参照ください</li>
+  </details>
+
+  <p>
+      <label for="api_key">api key:</label>
+      <input type="password" id="api_key" name="api_key">
+    <label><input type="radio" name="model" value="gpt-3.5-turbo" checked="">gpt-3.5-turbo</label>
+  </p>
+
+  <p id="usage">このリクエストの利用料金: 0.002033 USD</p>
+
+  <div>
+    <label for="input">GPTへの入力フォーム</label><br>
+    <textarea id="input" name="input" rows="10" cols="140">市内保育所における非常災害発生時等の対応について
+　令和元年度に大型で非常に強い勢力の台風が関東地方に上陸し、鉄道等の公共交通機関による大規模な計画運休が実施されました。
+
+　こうした状況を踏まえ、厚生労働省より臨時休園に関する課題や考え方が示されたことに加え、市区町村に対し、臨時休園等の基準について策定するよう要請がありました。
+
+　台風や豪雨等に伴う気象情報や避難情報の発令時には、園児・保護者・保育士等の生命や身体の安全確保を最優先する観点から、市内保育園等を休園することといたします。
+
+【臨時休園等をする場合】
+市内において特別警報（大雨・大雪・暴風等）が発表された場合または発表が見込まれる場合
+公共交通機関の計画運休の予定が発表されるなど、送迎が困難になる恐れがある場合
+その他、地震の発生など、安全面に影響がある場合
+（注釈1） 特別警報とは、警報の発表基準をはるかに超える大雨等が予想され、重大な危険が差し迫った異常な状況にある場合に、気象庁から発表されるものです。
+
+　皆様のご理解ご協力をお願いするとともに、非常災害発生時等における家庭保育へのご協力も併せてお願いいたします。</textarea>
+        <button id="send" onclick="sendData()">gptに聞く</button>
+        <button id="send" onclick="saveHTML()">HTMLに保存</button>
+  </div>
+
+  <div>
+    <p class="system_p">
+      <label for="system">system prompt</label><br>
+      <textarea id="system" name="sytem" rows="10" cols="140">文章の校正を日本語で提案。元の文体を大きく変えず、よりわかりやすくする方向で</textarea>
+    </p>
+
+    <p class="user_p">
+      <label for="input1">user prompt</label><br>
+      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">市内保育所における非常災害発生時等の対応について
+　令和元年度に大型で非常に強い勢力の台風が関東地方に上陸し、鉄道等の公共交通機関による大規模な計画運休が実施されました。
+
+　こうした状況を踏まえ、厚生労働省より臨時休園に関する課題や考え方が示されたことに加え、市区町村に対し、臨時休園等の基準について策定するよう要請がありました。
+
+　台風や豪雨等に伴う気象情報や避難情報の発令時には、園児・保護者・保育士等の生命や身体の安全確保を最優先する観点から、市内保育園等を休園することといたします。
+
+【臨時休園等をする場合】
+市内において特別警報（大雨・大雪・暴風等）が発表された場合または発表が見込まれる場合
+公共交通機関の計画運休の予定が発表されるなど、送迎が困難になる恐れがある場合
+その他、地震の発生など、安全面に影響がある場合
+（注釈1） 特別警報とは、警報の発表基準をはるかに超える大雨等が予想され、重大な危険が差し迫った異常な状況にある場合に、気象庁から発表されるものです。
+
+　皆様のご理解ご協力をお願いするとともに、非常災害発生時等における家庭保育へのご協力も併せてお願いいたします。</textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output1">assistant response</label> <br>
+      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">市内の保育所における非常災害時の対応について
+　令和元年度には、関東地方に大型で非常に強い台風が上陸し、公共交通機関が計画的に運休されるなど、大規模な影響がありました。
+
+　このような状況を受けて、厚生労働省からは臨時休園に関する課題や考え方が示され、市区町村には臨時休園の基準を策定するよう要請がありました。
+
+　台風や豪雨などの気象情報や避難情報が発令された場合、園児や保護者、保育士の安全を最優先に考え、市内の保育園は休園となります。
+
+【臨時休園の場合】
+・市内で特別警報（大雨・大雪・暴風など）が発表された場合、または発表が予想される場合
+・公共交通機関が計画的に運休する予定が発表され、送迎が困難になる恐れがある場合
+・その他、地震など安全面に影響がある場合
+（注釈1） 特別警報とは、警報の基準をはるかに超える大雨などが予想され、重大な危険が差し迫った異常な状況にある場合に、気象庁から発表されるものです。
+
+　皆様にはご理解とご協力をお願いいたします。また、非常災害時には家庭での保育にもご協力いただければ幸いです。</textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input2">user prompt</label><br>
+      <textarea id="input2" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output2">assistant response</label> <br>
+      <textarea id="output2" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input3">user prompt</label><br>
+      <textarea id="input3" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output3">assistant response</label> <br>
+      <textarea id="output3" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input4">user prompt</label><br>
+      <textarea id="input4" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output4">assistant response</label> <br>
+      <textarea id="output4" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input5">user prompt</label><br>
+      <textarea id="input5" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output5">assistant response</label> <br>
+      <textarea id="output5" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input6">user prompt</label><br>
+      <textarea id="input6" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output6">assistant response</label> <br>
+      <textarea id="output6" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input7">user prompt</label><br>
+      <textarea id="input7" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output7">assistant response</label> <br>
+      <textarea id="output7" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input8">user prompt</label><br>
+      <textarea id="input8" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output8">assistant response</label> <br>
+      <textarea id="output8" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input9">user prompt</label><br>
+      <textarea id="input9" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output9">assistant response</label> <br>
+      <textarea id="output9" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input10">user prompt</label><br>
+      <textarea id="input10" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output10">assistant response</label> <br>
+      <textarea id="output10" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+  </div>
+
+ 
+
+ 
+
+ </body></html>
