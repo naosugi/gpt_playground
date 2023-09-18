@@ -1,0 +1,416 @@
+<html lang="ja"><head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPT playground</title>
+
+  <script> 
+    async function sendData() { 
+      let elements = document.getElementsByName('model');
+      let len = elements.length;
+            /* ラヂオボタンでモデル種類を選ぶようになるなら有効化
+      let modelName = '';
+      for (let i = 0; i < len; i++){
+        if (elements.item(i).checked){
+          modelName = elements.item(i).value;
+        }
+      }
+            */
+      document.getElementById("send").setAttribute("disabled", true);
+      let modelVer = "gpt-3.5-turbo"; //OpenAIのGPT3.5がデフォルト値
+      const url = "https://api.openai.com/v1/chat/completions"
+      const input = document.getElementById("input").value;
+      const system = document.getElementById("system").value; 
+      const apiKey = document.getElementById("api_key").value; // ここにAPIキーを入力してください 
+      var message = [
+        {"role": "system","content":system}
+      ]
+      const prompts = document.getElementsByClassName("prompt");
+
+      var i_last = 1;
+      for (let i=0; i< prompts.length-2; i+=2){
+        if (prompts.item(i).value.length>0){
+          message.push({"role": "user","content":prompts.item(i).value});
+          message.push({"role": "assistant","content":prompts.item(i+1).value});
+          i_last = i_last+1
+        }
+      }
+
+      message.push({"role": "user","content":input})
+      // OpenAI とのAPI通信
+            const requestOptions = { 
+        method: "POST", 
+        mode: "cors",
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": "Bearer "+apiKey,
+          "Access-Control-Allow-Origin": "*",
+          cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+          credentials: 'omit', // include, *same-origin, omit,
+        }, 
+
+        body: JSON.stringify({
+                                    "model": modelVer,
+                  "messages": message,
+                  "temperature": 0
+                    })
+      };
+
+      try {
+        const response = await fetch(url, requestOptions); 
+        if (!response.ok) { 
+          throw new Error(`HTTP error! status: ${response.status}`); 
+          }
+        const data = await response.json();
+        console.log(data);
+
+        document.getElementById("input"+i_last).value = input;
+        document.getElementById("output"+i_last).value = data["choices"][0]["message"]["content"];
+
+        const cost = (data["usage"]["prompt_tokens"] * 0.0015 * 1/1000 + data["usage"]["completion_tokens"] * 0.002 * 1/1000);
+
+        document.getElementById("usage").innerText = "このリクエストの利用料金: " + cost + " USD"; 
+      }
+
+      catch (error) {
+        alert(`Fetchエラー: ${error.message}`);
+      }
+      finally {
+        document.getElementById("send").removeAttribute("disabled");
+      }
+    } 
+    async function saveHTML() {
+        // DOMの書き換えコードを実行
+        const input = document.getElementById("input").value;
+        const system = document.getElementById("system").value;
+        document.getElementById("input").outerHTML = '<textarea id="input" name="input" rows="10" cols="140">' + input + '</textarea>';
+        document.getElementById("system").outerHTML = '<textarea id="system" name="sytem" rows="10" cols="140">' + system + '</textarea>';
+        
+        const prompts = document.getElementsByClassName("prompt");
+        const max_length = prompts.length
+        for (let i=1; i<= max_length; i++){
+            if (document.getElementById("input"+i)){
+                const o1 = document.getElementById("input"+i).value;
+                const o2 = document.getElementById("output"+i).value;
+                document.getElementById("input"+i).outerHTML = '<textarea id="input' + i + '" class="prompt" name="user" rows="10" cols="140">' + o1 + '</textarea>';
+                document.getElementById("output"+i).outerHTML = '<textarea id="output' + i + '" class="prompt" name="user" rows="10" cols="140">' + o2 + '</textarea>';
+            }
+        }
+        
+        // 書き換えたDOMを含むHTML全体を取得
+        var modifiedHTML = document.documentElement.outerHTML;
+
+        // HTMLを保存するためのBlobを作成
+        var blob = new Blob([modifiedHTML], { type: 'text/html' });
+
+        // ダウンロード用のURLを作成し、リンクを生成
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'edited_gpt.html';
+        link.click();
+
+        // 作成したURLを解放
+        URL.revokeObjectURL(url);
+
+    }
+    </script> 
+
+</head> 
+
+<body> 
+  <details>
+    <summary>使い方</summary>
+    <h3>使用上の注意</h3>
+    <li>各環境にあわせた使用上の注意点を書く</li>
+    <h3>操作方法</h3>
+    <li>GPTへの入力フォームにGPTに聞きたいことを書き、「gptに聞く」ボタンを押してください。すると画面下のassistant responseの箇所にGPTからの応答が入ります</li>
+    <li>過去に入力した文字列はuser promptという箇所に残ります。これを消さずに、再度GPTへの入力フォームから送信すると前回の会話をふまえた反応が返ります</li>
+    <li>system promptを工夫することでGPTへの応答をある程度制御できます。詳細は<a href="https://www.digital.go.jp/assets/contents/node/information/field_ref_resources/5896883b-cc5a-4c5a-b610-eb32b0f4c175/82ccd074/20230725_resources_ai_outline.pdf">講義資料</a>や<a href="https://platform.openai.com/docs/api-reference/chat/create">GPT APIのドキュメント</a>などをご参照ください</li>
+  </details>
+
+  <p>
+      <label for="api_key">api key:</label>
+      <input type="password" id="api_key" name="api_key">
+    <label><input type="radio" name="model" value="gpt-3.5-turbo" checked="">gpt-3.5-turbo</label>
+  </p>
+
+  <p id="usage">このリクエストの利用料金: 0.0008700000000000001 USD</p>
+
+  <div>
+    <label for="input">GPTへの入力フォーム</label><br>
+    <textarea id="input" name="input" rows="10" cols="140">商品名に「ChatGPT」がつく本を2023/01/01~2023/01/31の間に買った人の数を、年代別（１０代以下、２０代、３０代、４０代、５０代、６０代、７０代以上）に集計</textarea>
+        <button id="send" onclick="sendData()">gptに聞く</button>
+        <button id="send" onclick="saveHTML()">HTMLに保存</button>
+  </div>
+
+  <div>
+    <p class="system_p">
+      <label for="system">system prompt</label><br>
+      <textarea id="system" name="sytem" rows="10" cols="140">Write the continuation of BigQuery SQL based on the request
+
+```sql
+with
+  user_info AS (
+    SELECT
+      user_id,
+      gender, #'male' or 'female' or 'other'
+      birthday, #Date type
+      create_date, # Date type
+    FROM
+      {project}.{dataset}.user_info
+  ),
+
+  action_log AS (
+    SELECT
+      user_id,
+      item_id,
+      action_type, # 'buy' or 'like' or 'cancel'
+      create_date, # Date type
+    FROM
+      {project}.{dataset}.action_log
+  ),
+
+  item_info AS (
+    SELECT
+      item_id,
+      title, #String type
+      category, #'book' or 'toy' or 'food'
+      price, #Int64 type
+      create_date, # Date type
+)
+
+SELECT
+```</textarea>
+    </p>
+
+    <p class="user_p">
+      <label for="input1">user prompt</label><br>
+      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">商品名に「ChatGPT」がつく本を2023/01/01~2023/01/31の間に買った人の数を、年代別（１０代以下、２０代、３０代、４０代、５０代、６０代、７０代以上）に集計</textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output1">assistant response</label> <br>
+      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">```sql
+SELECT
+  CASE
+    WHEN EXTRACT(YEAR FROM birthday) &gt;= 2013 THEN '10代以下'
+    WHEN EXTRACT(YEAR FROM birthday) &gt;= 2003 THEN '20代'
+    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1993 THEN '30代'
+    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1983 THEN '40代'
+    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1973 THEN '50代'
+    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1963 THEN '60代'
+    ELSE '70代以上'
+  END AS age_group,
+  COUNT(DISTINCT user_id) AS num_users
+FROM
+  user_info u
+JOIN
+  action_log a ON u.user_id = a.user_id
+JOIN
+  item_info i ON a.item_id = i.item_id
+WHERE
+  i.title LIKE '%ChatGPT%'
+  AND a.action_type = 'buy'
+  AND a.create_date BETWEEN '2023-01-01' AND '2023-01-31'
+GROUP BY
+  age_group
+ORDER BY
+  age_group
+```</textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input2">user prompt</label><br>
+      <textarea id="input2" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output2">assistant response</label> <br>
+      <textarea id="output2" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input3">user prompt</label><br>
+      <textarea id="input3" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output3">assistant response</label> <br>
+      <textarea id="output3" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input4">user prompt</label><br>
+      <textarea id="input4" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output4">assistant response</label> <br>
+      <textarea id="output4" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input5">user prompt</label><br>
+      <textarea id="input5" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output5">assistant response</label> <br>
+      <textarea id="output5" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input6">user prompt</label><br>
+      <textarea id="input6" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output6">assistant response</label> <br>
+      <textarea id="output6" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input7">user prompt</label><br>
+      <textarea id="input7" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output7">assistant response</label> <br>
+      <textarea id="output7" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input8">user prompt</label><br>
+      <textarea id="input8" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output8">assistant response</label> <br>
+      <textarea id="output8" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input9">user prompt</label><br>
+      <textarea id="input9" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output9">assistant response</label> <br>
+      <textarea id="output9" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input10">user prompt</label><br>
+      <textarea id="input10" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output10">assistant response</label> <br>
+      <textarea id="output10" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input11">user prompt</label><br>
+      <textarea id="input11" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output11">assistant response</label> <br>
+      <textarea id="output11" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input12">user prompt</label><br>
+      <textarea id="input12" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output12">assistant response</label> <br>
+      <textarea id="output12" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input13">user prompt</label><br>
+      <textarea id="input13" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output13">assistant response</label> <br>
+      <textarea id="output13" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input14">user prompt</label><br>
+      <textarea id="input14" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output14">assistant response</label> <br>
+      <textarea id="output14" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input15">user prompt</label><br>
+      <textarea id="input15" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output15">assistant response</label> <br>
+      <textarea id="output15" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input16">user prompt</label><br>
+      <textarea id="input16" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output16">assistant response</label> <br>
+      <textarea id="output16" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+    <p class="user_p">
+      <label for="input17">user prompt</label><br>
+      <textarea id="input17" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output17">assistant response</label> <br>
+      <textarea id="output17" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input18">user prompt</label><br>
+      <textarea id="input18" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output18">assistant response</label> <br>
+      <textarea id="output18" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input19">user prompt</label><br>
+      <textarea id="input19" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output19">assistant response</label> <br>
+      <textarea id="output19" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+
+    <p class="user_p">
+      <label for="input20">user prompt</label><br>
+      <textarea id="input20" class="prompt" name="user" rows="10" cols="140"></textarea>
+    </p>
+
+    <p class="output_p">
+      <label for="output20">assistant response</label> <br>
+      <textarea id="output20" class="prompt" name="user" rows="10" cols="140"></textarea> 
+    </p>
+  </div>
+
+ 
+
+ 
+
+ </body></html>

@@ -10,6 +10,7 @@ ChatGPTのAPIをcallするいわゆるplayground環境
 - [補助金・助成金・支援金の情報ラベル付け](https://naosugi.github.io/gpt_playground/example/補助金・助成金・支援金の情報ラベル付け.html)
 - [確定申告が必要か判定](https://naosugi.github.io/gpt_playground/example/%E7%A2%BA%E5%AE%9A%E7%94%B3%E5%91%8A%E3%81%8C%E5%BF%85%E8%A6%81%E3%81%8B%E5%88%A4%E5%AE%9A.html)
 - [キャラなりきり](https://naosugi.github.io/gpt_playground/example/LLMintoLUM.html)
+- [SQL作成補助](https://naosugi.github.io/gpt_playground/example/WriteSQL.html)
 
 
 
@@ -83,6 +84,11 @@ few shot learningによる例示と知識の与え方の例として提示
 
 Qiitaのこの[記事](https://qiita.com/naosugi1987/items/059fb69a15a3dc06f33d)を参照。わかりやすさとインパクトを優先させ既存の商用キャラクタを実例にしているため、著作権元からの指摘があれば即消す。[本リポジトリの製作者への連絡先](https://twitter.com/oosugi_naoya)。普通に会話を楽しんで、明らかに事実誤認があればfew shotに追加していく。あえて嘘（例えば、ダーリンとは？に対する回答を面堂終太郎にする）を入れ込むことによって回答がどう変化するかを楽しむこともできる。
 
+## 5. [WriteSQL](/example/WriteSQL.html) 
+
+コード作成補助の例として提示。2023/09/18に追記
+
+テーブルの情報をWITH句で与え、その続きを書かせるといった形で指示。今回の例のテーブルは適当にそれっぽいものを書いた。GPTへの入力に与える指示が明確であればあるほど正しいSQLが返ってきやすい。今回の例ではやっていないが最終的にSQLから出力されるもののカラム名を指定するなどして要件を明確化する。要件の明確化が求められるのでテーブルにどんなものが入っているかを意識できないと良い結果は得られにくい（ただしSQLを書く時間は大幅に軽減されるしSQL初心者にとっての良いお手本にもなる）
 
 # readme(English ver)
 
