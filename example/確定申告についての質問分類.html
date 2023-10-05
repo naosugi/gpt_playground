@@ -134,11 +134,11 @@
     <label><input type="radio" name="model" value="gpt-3.5-turbo" checked="">gpt-3.5-turbo</label>
   </p>
 
-  <p id="usage">このリクエストの利用料金: 0.0008700000000000001 USD</p>
+  <p id="usage">このリクエストの利用料金: 0.000421 USD</p>
 
   <div>
     <label for="input">GPTへの入力フォーム</label><br>
-    <textarea id="input" name="input" rows="10" cols="140">商品名に「ChatGPT」がつく本を2023/01/01~2023/01/31の間に買った人の数を、年代別（１０代以下、２０代、３０代、４０代、５０代、６０代、７０代以上）に集計</textarea>
+    <textarea id="input" name="input" rows="10" cols="140">新築を建てたばかり</textarea>
         <button id="send" onclick="sendData()">gptに聞く</button>
         <button id="send" onclick="saveHTML()">HTMLに保存</button>
   </div>
@@ -146,78 +146,34 @@
   <div>
     <p class="system_p">
       <label for="system">system prompt</label><br>
-      <textarea id="system" name="sytem" rows="10" cols="140">Write the continuation of BigQuery SQL based on the request
+      <textarea id="system" name="sytem" rows="10" cols="140">Take a deep breath and work on this problem step by step.
+確定申告についての質問を、下記のどのラベルに該当するか分類する
+ラベルは以下のlistから選ぶ
 
-```sql
-with
-  user_info AS (
-    SELECT
-      user_id,
-      gender, #'male' or 'female' or 'other'
-      birthday, #Date type
-      create_date, # Date type
-    FROM
-      {project}.{dataset}.user_info
-  ),
+### label list ###
+確定申告が必要になる条件を知りたい
+医療費控除の詳細を知りたい
+住宅ローン控除の詳細を知りたい
+ふるさと納税の詳細を知りたい
+事業者向けの制度を知りたい
+確定申告の申請方法を知りたい
+非課税所得の詳細を知りたい
+控除の詳細を知りたい
 
-  action_log AS (
-    SELECT
-      user_id,
-      item_id,
-      action_type, # 'buy' or 'like' or 'cancel'
-      create_date, # Date type
-    FROM
-      {project}.{dataset}.action_log
-  ),
-
-  item_info AS (
-    SELECT
-      item_id,
-      title, #String type
-      category, #'book' or 'toy' or 'food'
-      price, #Int64 type
-      create_date, # Date type
-)
-
-SELECT
-```</textarea>
+### output format ###
+{{#label_name1}}
+{{#label_name2}}
+{{#label_name3}}</textarea>
     </p>
 
     <p class="user_p">
       <label for="input1">user prompt</label><br>
-      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">商品名に「ChatGPT」がつく本を2023/01/01~2023/01/31の間に買った人の数を、年代別（１０代以下、２０代、３０代、４０代、５０代、６０代、７０代以上）に集計</textarea>
+      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">新築を建てたばかり</textarea>
     </p>
 
     <p class="output_p">
       <label for="output1">assistant response</label> <br>
-      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">```sql
-SELECT
-  CASE
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 2013 THEN '10代以下'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 2003 THEN '20代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1993 THEN '30代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1983 THEN '40代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1973 THEN '50代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1963 THEN '60代'
-    ELSE '70代以上'
-  END AS age_group,
-  COUNT(DISTINCT user_id) AS num_users
-FROM
-  user_info u
-JOIN
-  action_log a ON u.user_id = a.user_id
-JOIN
-  item_info i ON a.item_id = i.item_id
-WHERE
-  i.title LIKE '%ChatGPT%'
-  AND a.action_type = 'buy'
-  AND a.create_date BETWEEN '2023-01-01' AND '2023-01-31'
-GROUP BY
-  age_group
-ORDER BY
-  age_group
-```
-Take a deep breath and work on this problem step by step</textarea> 
+      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">住宅ローン控除の詳細を知りたい</textarea> 
     </p>
 
     <p class="user_p">
@@ -308,105 +264,6 @@ Take a deep breath and work on this problem step by step</textarea>
     <p class="output_p">
       <label for="output10">assistant response</label> <br>
       <textarea id="output10" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input11">user prompt</label><br>
-      <textarea id="input11" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output11">assistant response</label> <br>
-      <textarea id="output11" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input12">user prompt</label><br>
-      <textarea id="input12" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output12">assistant response</label> <br>
-      <textarea id="output12" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input13">user prompt</label><br>
-      <textarea id="input13" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output13">assistant response</label> <br>
-      <textarea id="output13" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input14">user prompt</label><br>
-      <textarea id="input14" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output14">assistant response</label> <br>
-      <textarea id="output14" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input15">user prompt</label><br>
-      <textarea id="input15" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output15">assistant response</label> <br>
-      <textarea id="output15" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input16">user prompt</label><br>
-      <textarea id="input16" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output16">assistant response</label> <br>
-      <textarea id="output16" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-    <p class="user_p">
-      <label for="input17">user prompt</label><br>
-      <textarea id="input17" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output17">assistant response</label> <br>
-      <textarea id="output17" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input18">user prompt</label><br>
-      <textarea id="input18" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output18">assistant response</label> <br>
-      <textarea id="output18" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input19">user prompt</label><br>
-      <textarea id="input19" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output19">assistant response</label> <br>
-      <textarea id="output19" class="prompt" name="user" rows="10" cols="140"></textarea> 
-    </p>
-
-    <p class="user_p">
-      <label for="input20">user prompt</label><br>
-      <textarea id="input20" class="prompt" name="user" rows="10" cols="140"></textarea>
-    </p>
-
-    <p class="output_p">
-      <label for="output20">assistant response</label> <br>
-      <textarea id="output20" class="prompt" name="user" rows="10" cols="140"></textarea> 
     </p>
   </div>
 
