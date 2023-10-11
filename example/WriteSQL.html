@@ -134,7 +134,7 @@
     <label><input type="radio" name="model" value="gpt-3.5-turbo" checked="">gpt-3.5-turbo</label>
   </p>
 
-  <p id="usage">このリクエストの利用料金: 0.0008700000000000001 USD</p>
+  <p id="usage">このリクエストの利用料金: 0.0010815 USD</p>
 
   <div>
     <label for="input">GPTへの入力フォーム</label><br>
@@ -147,6 +147,7 @@
     <p class="system_p">
       <label for="system">system prompt</label><br>
       <textarea id="system" name="sytem" rows="10" cols="140">Write the continuation of BigQuery SQL based on the request
+Take a deep breath and work on this problem step by step
 
 ```sql
 with
@@ -185,39 +186,12 @@ SELECT
 
     <p class="user_p">
       <label for="input1">user prompt</label><br>
-      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">商品名に「ChatGPT」がつく本を2023/01/01~2023/01/31の間に買った人の数を、年代別（１０代以下、２０代、３０代、４０代、５０代、６０代、７０代以上）に集計</textarea>
+      <textarea id="input1" class="prompt" name="user" rows="10" cols="140"></textarea>
     </p>
 
     <p class="output_p">
       <label for="output1">assistant response</label> <br>
-      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">```sql
-SELECT
-  CASE
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 2013 THEN '10代以下'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 2003 THEN '20代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1993 THEN '30代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1983 THEN '40代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1973 THEN '50代'
-    WHEN EXTRACT(YEAR FROM birthday) &gt;= 1963 THEN '60代'
-    ELSE '70代以上'
-  END AS age_group,
-  COUNT(DISTINCT user_id) AS num_users
-FROM
-  user_info u
-JOIN
-  action_log a ON u.user_id = a.user_id
-JOIN
-  item_info i ON a.item_id = i.item_id
-WHERE
-  i.title LIKE '%ChatGPT%'
-  AND a.action_type = 'buy'
-  AND a.create_date BETWEEN '2023-01-01' AND '2023-01-31'
-GROUP BY
-  age_group
-ORDER BY
-  age_group
-```
-Take a deep breath and work on this problem step by step</textarea> 
+      <textarea id="output1" class="prompt" name="user" rows="10" cols="140"></textarea> 
     </p>
 
     <p class="user_p">

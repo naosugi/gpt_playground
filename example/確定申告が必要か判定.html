@@ -134,7 +134,7 @@
     <label><input type="radio" name="model" value="gpt-3.5-turbo" checked="">gpt-3.5-turbo</label>
   </p>
 
-  <p id="usage">このリクエストの利用料金: 0.003403 USD</p>
+  <p id="usage">このリクエストの利用料金: 0.0035255000000000004 USD</p>
 
   <div>
     <label for="input">GPTへの入力フォーム</label><br>
@@ -147,6 +147,7 @@
     <p class="system_p">
       <label for="system">system prompt</label><br>
       <textarea id="system" name="sytem" rows="10" cols="140">確定申告が必要かを判定
+ラベルは以下のlistから選ぶ. Take a deep breath and work on this problem step by step
 
 ### rule ###
 次の1から4のいずれかに該当する方（確定申告をすれば税金が還付される方を除きます。）は、所得税等の確定申告が必要です。
@@ -213,16 +214,12 @@
 
     <p class="user_p">
       <label for="input1">user prompt</label><br>
-      <textarea id="input1" class="prompt" name="user" rows="10" cols="140">収入が２ヶ所以上ある</textarea>
+      <textarea id="input1" class="prompt" name="user" rows="10" cols="140"></textarea>
     </p>
 
     <p class="output_p">
       <label for="output1">assistant response</label> <br>
-      <textarea id="output1" class="prompt" name="user" rows="10" cols="140">①給与の収入金額が2,000万円を超える
-(3)　給与を2か所以上から受けていて、かつ、その給与の全部が源泉徴収の対象となる場合において、年末調整をされなかった給与の収入金額と、各種の所得金額（給与所得、退職所得を除く。）との合計額が20万円を超える
-
-上記のいずれかに該当する場合、確定申告が必要です。
-Take a deep breath and work on this problem step by step</textarea> 
+      <textarea id="output1" class="prompt" name="user" rows="10" cols="140"></textarea> 
     </p>
 
     <p class="user_p">
